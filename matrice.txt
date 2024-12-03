@@ -1,4 +1,5 @@
 .data
+aux2: .long 0
 aux1: .long 0
 omie: .long 1024
 nn: .long 1048576
@@ -19,7 +20,7 @@ size_interval: .long 0
 format_citire: .asciz "%d\n"
 m: .long 0
 afis_add: .asciz "%d: ((%d, %d), (%d, %d))\n"
-afis_get: .asciz "(%d, %d)\n"
+afis_get: .asciz "((%d, %d), (%d, %d))\n"
 .text
 
 dim_interval:   
@@ -77,8 +78,10 @@ add:
         xorl %ecx, %ecx
         movl %edx, %ecx
         movl %edx, n
-        addl $1024, n
         movl %edx, aux1
+        movl omie, %edx
+        addl %edx, n
+        movl aux1, %edx
         for1:
             cmpl %ecx, n
                 je add_for
@@ -113,7 +116,7 @@ add:
                 jmp for1
         add_for:
         movl aux1, %edx
-        addl $1024, %edx
+        addl omie, %edx
         jmp for12
 
     add_final:
@@ -128,36 +131,49 @@ get:
     movl 8(%ebp), %ebx
     movl %ebx, id
     lea v, %edi
-    for4:
-        cmpl %ecx, n
-            je get_final
-        movl (%edi, %ecx, 4), %ebx
-        cmpl %ebx, id
-            jne continua_get
-        movl %ecx, %eax
-        for5:
-            cmp %ecx, n
-                jne cont_get1
-            movl %ecx, %ebx
-            dec %ebx
-            popl %ebp
-            ret
-            cont_get1:
-                movl (%edi, %ecx, 4), %ebx
-                cmp %ebx, id
-                    je cont_get2
+    xorl %edx, %edx
+    for13:
+        cmpl %edx, nn
+                je get_final
+        xorl %ecx, %ecx
+        movl %edx, %ecx
+        movl %edx, n
+        movl %edx, aux1
+        movl omie, %edx
+        addl %edx, n
+        movl aux1, %edx
+        for4:
+            cmpl %ecx, n
+                je get_for
+            movl (%edi, %ecx, 4), %ebx
+            cmpl %ebx, id
+                jne continua_get
+            movl %ecx, %eax
+            for5:
+                cmp %ecx, n
+                    jne cont_get1
                 movl %ecx, %ebx
                 dec %ebx
                 popl %ebp
                 ret
-            cont_get2:
+                cont_get1:
+                    movl (%edi, %ecx, 4), %ebx
+                    cmp %ebx, id
+                        je cont_get2
+                    movl %ecx, %ebx
+                    dec %ebx
+                    popl %ebp
+                    ret
+                cont_get2:
+                    inc %ecx
+                    jmp for5
+            continua_get:
                 inc %ecx
-                jmp for5
-
-
-        continua_get:
-            inc %ecx
-            jmp for4
+                jmp for4
+        get_for:
+        movl aux1, %edx
+        addl omie, %edx
+        jmp for13
 
     get_final:
     xorl %eax, %eax
@@ -173,33 +189,48 @@ delete:
     movl %ebx, id
     lea v, %edi
     xorl %ecx, %ecx
-    for6:
-        cmpl %ecx, n
-            je del_final
-        movl (%edi, %ecx, 4), %ebx
-        cmpl %ebx, id
-            jne continua_del
-        for7:
-            cmp %ecx, n
-                jne cont_del1
-            popl %ebp
-            ret
-            cont_del1:
-                movl (%edi, %ecx, 4), %ebx
-                cmp %ebx, id
-                    je cont_del2
+    xorl %edx, %edx
+    for14:
+        cmpl %edx, nn
+                je del_final
+        xorl %ecx, %ecx
+        movl %edx, %ecx
+        movl %edx, n
+        movl %edx, aux1
+        movl omie, %edx
+        addl %edx, n
+        movl aux1, %edx
+        for6:
+            cmpl %ecx, n
+                je del_for
+            movl (%edi, %ecx, 4), %ebx
+            cmpl %ebx, id
+                jne continua_del
+            for7:
+                cmp %ecx, n
+                    jne cont_del1
                 popl %ebp
                 ret
-            cont_del2:
-                movl $0, %ebx
-                mov %ebx, (%edi, %ecx, 4)
+                cont_del1:
+                    movl (%edi, %ecx, 4), %ebx
+                    cmp %ebx, id
+                        je cont_del2
+                    popl %ebp
+                    ret
+                cont_del2:
+                    movl $0, %ebx
+                    mov %ebx, (%edi, %ecx, 4)
+                    inc %ecx
+                    jmp for7
+
+
+            continua_del:
                 inc %ecx
-                jmp for7
-
-
-        continua_del:
-            inc %ecx
-            jmp for6
+                jmp for6
+        del_for:
+        movl aux1, %edx
+        addl omie, %edx
+        jmp for14
 
     del_final:
     xorl %eax, %eax
@@ -210,49 +241,90 @@ delete:
 afisare:
     xorl %ecx, %ecx
     lea v, %edi
-    for8:
-        cmpl %ecx, n
+    xorl %edx, %edx
+    for15:
+        cmpl %edx, nn
             je afis_final
-        movl (%edi, %ecx, 4), %ebx
-        cmpl $0, %ebx
-            je continua_afis
-        movl %ebx, id
-        movl %ecx, %eax
-        for9:
-            cmp %ecx, n
-                jne cont_afis1
-            dec %ecx
-            pushl %ecx
-            pushl %eax
-            pushl id
-            pushl $afis_add
-            call printf
-            addl $16, %esp
-            popl %ebp
-            ret
-            cont_afis1:
-                movl (%edi, %ecx, 4), %ebx
-                cmp %ebx, id
-                    je cont_afis2
+        xorl %ecx, %ecx
+        movl %edx, %ecx
+        movl %edx, n
+        movl %edx, aux1
+        movl omie, %edx
+        addl %edx, n
+        movl aux1, %edx
+        for8:
+            cmpl %ecx, n
+                je afis_final
+            movl (%edi, %ecx, 4), %ebx
+            cmpl $0, %ebx
+                je continua_afis
+            movl %ebx, id
+            movl %ecx, %eax
+            for9:
+                cmp %ecx, n
+                    jne cont_afis1
                 dec %ecx
-                movl %ecx, spc
-                pushl %ecx
+                movl %ecx, %ebx
+                movl %ecx, aux1
+                # #####
+                movl %eax, %ecx
+                xorl %edx, %edx
+                movl %ebx, %eax
+                divl omie
+                pushl %edx
+                pushl %eax
+                movl %ecx, %eax
+                xorl %edx, %edx
+                divl omie
+                pushl %edx
                 pushl %eax
                 pushl id
                 pushl $afis_add
                 call printf
-                movl spc, %ecx
-                addl $16, %esp
+                addl $24, %esp
+                # #####
+                movl aux2, %ecx
+                jmp afis_for
+                cont_afis1:
+                    movl (%edi, %ecx, 4), %ebx
+                    cmp %ebx, id
+                        je cont_afis2
+                    dec %ecx
+                    movl %ecx, spc
+                    movl %ecx, %ebx
+                    # #####
+                movl %eax, %ecx
+                xorl %edx, %edx
+                movl %ebx, %eax
+                divl omie
+                pushl %edx
+                pushl %eax
+                movl %ecx, %eax
+                xorl %edx, %edx
+                divl omie
+                pushl %edx
+                pushl %eax
+                pushl id
+                pushl $afis_add
+                call printf
+                addl $24, %esp
+                # #####
+                    movl spc, %ecx
+                    
 
-                jmp continua_afis
-            cont_afis2:
+                    jmp continua_afis
+                cont_afis2:
+                    incl %ecx
+                    jmp for9
+
+
+            continua_afis:
                 incl %ecx
-                jmp for9
-
-
-        continua_afis:
-            incl %ecx
-            jmp for8
+                jmp for8
+        afis_for:
+        movl aux1, %edx
+        addl omie, %edx
+        jmp for15
 
     afis_final:
     xorl %eax, %eax
@@ -390,11 +462,20 @@ main:
         call get
         popl %edx
         
-        pushl %ebx
+        movl %eax, %ecx
+        xorl %edx, %edx
+        movl %ebx, %eax
+        divl omie
+        pushl %edx
+        pushl %eax
+        movl %ecx, %eax
+        xorl %edx, %edx
+        divl omie
+        pushl %edx
         pushl %eax
         pushl $afis_get
         call printf
-        addl $12, %esp
+        addl $20, %esp
 
         pushl $0
         call fflush
