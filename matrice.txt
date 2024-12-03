@@ -1,4 +1,6 @@
 .data
+ind: .long 0
+aux3: .long 0
 aux2: .long 0
 aux1: .long 0
 omie: .long 1024
@@ -254,7 +256,7 @@ afisare:
         movl aux1, %edx
         for8:
             cmpl %ecx, n
-                je afis_final
+                je afis_for
             movl (%edi, %ecx, 4), %ebx
             cmpl $0, %ebx
                 je continua_afis
@@ -265,7 +267,7 @@ afisare:
                     jne cont_afis1
                 dec %ecx
                 movl %ecx, %ebx
-                movl %ecx, aux1
+                movl %ecx, aux2
                 # #####
                 movl %eax, %ecx
                 xorl %edx, %edx
@@ -331,49 +333,179 @@ afisare:
     xorl %ebx, %ebx
     ret
 
-defragmentation:
+add_def:
+    pushl %ebp
+    movl %esp, %ebp
+    movl 12(%ebp), %eax
+    movl %eax, size
+    movl 8(%ebp), %eax
+    movl %eax, id
+    pushl size
+    call dim_interval
+    movl %eax, size_interval
+    popl %ebx
     lea v, %edi
-    xorl %ecx, %ecx
-    movl %ecx, i
-    movl $1045, i
-    for10:
-        cmpl %ecx, n
-            je def_final
-        movl (%edi, %ecx, 4), %ebx
-        cmpl $0, %ebx
-            je continua_def
-        cmpl $1045, i
-        je continua_def
-        for11:
-            cmp %ecx, n
-                jne cont_def1
-            ret
-            cont_def1:
-                movl (%edi, %ecx, 4), %ebx
-                cmp $0, %ebx
-                    je continua_def
-            cont_def2:
-                movl i, %ebx
-                incl i
-                movl (%edi, %ecx, 4), %eax
-                movl %eax, (%edi, %ebx, 4)
-                movl $0, %ebx
-                movl %ebx, (%edi, %ecx, 4)
+    xorl %edx, %edx
+    movl ind, %ecx
+    movl ind, %eax
+    movl $8, %ebx
+    divl %ebx
+    xorl %edx, %edx
+    movl $8, %ebx
+    mull %ebx
+    movl %eax, %edx
+    for19:
+        cmpl %edx, nn
+                je addd_final
+        movl %edx, n
+        movl %edx, aux1
+        movl omie, %edx
+        addl %edx, n
+        movl aux1, %edx
+        for20:
+            cmpl %ecx, n
+                je addd_for
+            movl (%edi, %ecx, 4), %ebx
+            cmpl $0, %ebx
+                jne continua_addd
+            movl %ecx, %ebx
+            movl %ecx, %eax
+            addl  size_interval, %ebx
+            for21:
+                cmp %ecx, %ebx
+                    jne contd
+                pushl id
+                
+                call modifica
+                popl %ebx
+                movl %ecx, ind
+                popl %ebp
+                dec %ebx
+                ret
+
+                contd:
+                    cmp %ecx, n
+                    je addd_for
+                    movl (%edi, %ecx, 4), %edx
+                    cmpl $0, %edx
+                        jne continua_addd
                 inc %ecx
-                jmp for11
-
-
-        continua_def:
-            cmpl $1045, i
-            jne con1
-            cmpl $0, (%edi, %ecx, 4)
-            jne con1
-            movl %ecx, i
-            con1:
+                movl %ecx, ind
+                jmp for21
             
-            con:
-            inc %ecx
-            jmp for10
+            continua_addd:
+                inc %ecx
+                movl %ecx, ind
+                jmp for20
+        addd_for:
+        movl %ecx, ind
+        movl aux1, %edx
+        addl omie, %edx
+        xorl %ecx, %ecx
+        movl %edx, %ecx
+        movl %ecx, ind
+        
+        jmp for19
+
+    addd_final:
+    movl %ecx, ind
+    xorl %eax, %eax
+    xorl %ebx, %ebx
+    popl %ebp
+    ret
+
+defragmentation:
+    xorl %ecx, %ecx
+    lea v, %edi
+    xorl %edx, %edx
+    movl %edx, ind
+    for16:
+        cmpl %edx, nn
+            je def_final
+        xorl %ecx, %ecx
+        movl %edx, %ecx
+        movl %edx, n
+        movl %edx, aux1
+        movl omie, %edx
+        addl %edx, n
+        movl aux1, %edx
+        for17:
+            cmpl %ecx, n
+                je def_for
+            movl (%edi, %ecx, 4), %ebx
+            cmpl $0, %ebx
+                je continua_def
+            movl %ebx, id
+            movl %ecx, %eax
+            for18:
+                cmp %ecx, n
+                    jne cont_def1
+                dec %ecx
+                movl %ecx, %ebx
+                movl %ecx, aux2
+                # #####
+                movl %ebx, %ecx
+                subl %eax, %ebx
+                movl %ebx, aux3
+                # 8 * ebx + 8
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl $8, %ebx
+                pushl %ebx
+                pushl id
+                call add_def
+                addl $8, %esp
+                # #####
+                movl aux2, %ecx
+                jmp def_for
+                cont_def1:
+                    movl (%edi, %ecx, 4), %ebx
+                    cmp %ebx, id
+                        je cont_def2
+                    dec %ecx
+                    movl %ecx, spc
+                    movl %ecx, %ebx
+                    # #####
+                    brei:
+                movl %ebx, %ecx
+                subl %eax, %ebx
+                movl %ebx, aux3
+                # 8 * ebx + 8
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl aux3, %ebx
+                addl $8, %ebx
+                pushl %ebx
+                pushl id
+                call add_def
+                addl $8, %esp
+                # #####
+                    movl spc, %ecx
+                    
+
+                    jmp continua_def
+                cont_def2:
+                    movl $0, (%edi, %ecx, 4)
+                    incl %ecx
+                    jmp for18
+
+
+            continua_def:
+                incl %ecx
+                jmp for17
+        def_for:
+        movl aux1, %edx
+        addl omie, %edx
+        jmp for16
 
     def_final:
     xorl %eax, %eax
