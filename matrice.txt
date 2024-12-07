@@ -3,6 +3,8 @@ ind: .long 0
 aux3: .long 0
 aux2: .long 0
 aux1: .long 0
+n1: .long 0
+auxdef: .long 0
 omie: .long 1024
 nn: .long 1048576
 i: .long 0
@@ -348,22 +350,22 @@ add_def:
     xorl %edx, %edx
     movl ind, %ecx
     movl ind, %eax
-    movl $8, %ebx
+    movl omie, %ebx
     divl %ebx
     xorl %edx, %edx
-    movl $8, %ebx
+    movl omie, %ebx
     mull %ebx
     movl %eax, %edx
     for19:
         cmpl %edx, nn
                 je addd_final
-        movl %edx, n
+        movl %edx, n1
         movl %edx, aux1
         movl omie, %edx
-        addl %edx, n
+        addl %edx, n1
         movl aux1, %edx
         for20:
-            cmpl %ecx, n
+            cmpl %ecx, n1
                 je addd_for
             movl (%edi, %ecx, 4), %ebx
             cmpl $0, %ebx
@@ -371,7 +373,9 @@ add_def:
             movl %ecx, %ebx
             movl %ecx, %eax
             addl  size_interval, %ebx
+
             for21:
+                
                 cmp %ecx, %ebx
                     jne contd
                 pushl id
@@ -384,7 +388,7 @@ add_def:
                 ret
 
                 contd:
-                    cmp %ecx, n
+                    cmp %ecx, n1
                     je addd_for
                     movl (%edi, %ecx, 4), %edx
                     cmpl $0, %edx
@@ -425,10 +429,10 @@ defragmentation:
         xorl %ecx, %ecx
         movl %edx, %ecx
         movl %edx, n
-        movl %edx, aux1
+        movl %edx, auxdef
         movl omie, %edx
         addl %edx, n
-        movl aux1, %edx
+        movl auxdef, %edx
         for17:
             cmpl %ecx, n
                 je def_for
@@ -503,7 +507,7 @@ defragmentation:
                 incl %ecx
                 jmp for17
         def_for:
-        movl aux1, %edx
+        movl auxdef, %edx
         addl omie, %edx
         jmp for16
 
