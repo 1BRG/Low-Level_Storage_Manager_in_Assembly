@@ -158,6 +158,7 @@ delete:
     movl %ebx, id
     lea v, %edi
     xorl %ecx, %ecx
+    xorl %edx, %edx
     for6:
         cmpl %ecx, n
             je del_final
@@ -213,7 +214,6 @@ afisare:
             pushl $afis_add
             call printf
             addl $16, %esp
-            popl %ebp
             ret
             cont_afis1:
                 movl (%edi, %ecx, 4), %ebx
@@ -403,6 +403,9 @@ main:
 
 
 final:
+ pushl $0
+        call fflush
+        popl %ebx
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80

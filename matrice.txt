@@ -1,4 +1,8 @@
 .data
+total: .long 0
+numar: .byte 0
+urmatorul: .long 0
+date: .space 4096
 ind: .long 0
 aux3: .long 0
 aux2: .long 0
@@ -19,9 +23,13 @@ dr: .long 0
 v: .space 4194304
 ct: .long 0
 id: .long 0
+test: .asciz "%d\n"
+test1: .asciz "%s\n"
+fisier: .space 4096
 size: .long 0
 size_interval: .long 0
 format_citire: .asciz "%d\n"
+format_concrete: .asciz "%s\n"
 m: .long 0
 afis_add: .asciz "%d: ((%d, %d), (%d, %d))\n"
 afis_get: .asciz "((%d, %d), (%d, %d))\n"
@@ -63,6 +71,7 @@ modifica:
         popl %ebp
         ret
 
+    
 add:
     pushl %ebp
     movl %esp, %ebp
@@ -516,6 +525,40 @@ defragmentation:
     xorl %ebx, %ebx
     ret
 
+nume_fisier:
+    xorl %eax, %eax
+    xorl %ebx, %ebx
+    movl $10, %ebx
+  #  addl total, %ebx
+    calculate:
+        movl %eax, %edx
+        xorl %eax, %eax
+        movb (%esi, %ebx, 1), %al
+        movl %eax, %ecx
+        movl %edx, %eax
+        cmp $0, %ecx
+        je final_nume
+        
+        subl $48, %ecx
+        cmp $0, %ecx
+        jl calculate1
+        cmp $9, %ecx
+        jg calculate1
+        xorl %edx, %edx
+        movl $10, %edi
+        mull %edi
+        addl %ecx, %eax
+        xorl %edx, %edx
+        movl $255, %edi
+        divl %edi
+        movl %edx, %eax
+        calculate1:
+        incl %ebx
+        jmp calculate
+
+    final_nume:
+    inc %eax
+    ret
 
 .global main
 
@@ -637,12 +680,57 @@ main:
         call defragmentation
         call afisare
     p4:
+        cmpl $5, op
+        jne p5
+        pushl $fisier
+        pushl $format_concrete
+        call scanf
+        addl $8, %esp
+        movl $5, %eax
+        movl $fisier, %ebx
+        xorl %ecx, %ecx
+        int $0x80
+
+        movl %eax, %ebx
+        movl $141, %eax
+        movl $date, %ecx
+        movl $4096, %edx
+        int $0x80
+
+        movl $date, %esi
+        movl $0, total
+        citire:
+            xorl %eax, %eax
+            movl $8, %ebx
+           # addl total, %ebx
+            movb (%esi, %ebx, 1), %al
+            movl %eax, urmatorul
+            call nume_fisier
+            # pushl %eax
+            # pushl $test
+            # call printf
+            # addl $8, %esp
+            bb:
+            addl urmatorul, %esi
+            movl urmatorul, %eax
+            addl %eax, total
+            cmp $0, %eax
+            jne citire
+
+        
+
+
+
+    p5:
     movl aux, %ecx
     inc %ecx
     jmp for3
 
 
 final:
+ pushl $0
+        call fflush
+        popl %ebx
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
