@@ -639,18 +639,19 @@ concrete:
             movl $108, %eax
             movl $stats, %ecx
             int $0x80
-
-            xorl %eax, %eax
-            movl $23, %ecx
+            
             movl $stats, %edi
+            xorl %eax, %eax
+            movl $22, %ecx
+            movb (%edi, %ecx, 1), %al
+            incl %ecx
             movb (%edi, %ecx, 1), %ah
-            decl %ecx
-            movb (%edi, %ecx, 1), %al
+            movl $20, %ecx
+
             shl $16, %eax
-            decl %ecx
-            movb (%edi, %ecx, 1), %ah 
-            decl %ecx
             movb (%edi, %ecx, 1), %al
+            inc %ecx
+            movb (%edi, %ecx, 1), %ah
             movl %eax, size
             
 
@@ -681,13 +682,14 @@ concrete:
 
             cmp $0, %ebx
                 jne  bb
-            # add copy paste
-            # CA COncrete e mai smeker si nu face ceil
+            # add
             movl size, %eax
             xorl %edx, %edx
             divl omie
             xorl %edx, %edx
-            mull omie
+            movl $8, %ecx
+            mull %ecx
+            xorl %edx, %edx
             movl %eax, size
 
 
