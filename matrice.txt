@@ -670,22 +670,46 @@ concrete:
             pushl $test
             call printf
             addl $8, %esp
-
-            pushl size
-            pushl $test
-            call printf
-            addl $8, %esp
             # get
             pushl id
             call get
             popl %edx
 
             cmp $0, %ebx
-                jne  bb
+                je facadd
+            movl size, %eax
+            xorl %edx, %edx
+            divl omie
+            
+            movl %eax, size
+            pushl size
+            pushl $test
+            call printf
+            addl $8, %esp
+            movl size, %eax
+            pushl $0
+            pushl $0
+            pushl $0
+            pushl $0
+            pushl id
+            pushl $afis_add
+            call printf
+            addl $24, %esp
+            jmp bb
+
+            facadd:
             # add
             movl size, %eax
             xorl %edx, %edx
             divl omie
+            
+            movl %eax, size
+            pushl size
+            pushl $test
+            call printf
+            addl $8, %esp
+            movl size, %eax
+
             xorl %edx, %edx
             movl $8, %ecx
             mull %ecx
