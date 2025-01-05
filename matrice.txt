@@ -82,6 +82,14 @@ add:
     movl %eax, size
     movl 8(%ebp), %eax
     movl %eax, id
+
+    pushl id
+    call get
+    popl %edx
+
+    cmp $0, %ebx
+        jne add_final
+
     pushl size
     call dim_interval
     movl %eax, size_interval
@@ -680,9 +688,11 @@ concrete:
             movl size, %eax
             xorl %edx, %edx
             divl omie
-            
+            xorl %edx, %edx
             movl %eax, size
-            pushl size
+
+
+            pushl %eax
             pushl $test
             call printf
             addl $8, %esp
@@ -704,17 +714,12 @@ concrete:
             divl omie
             
             movl %eax, size
-            pushl size
+
+            pushl %eax
             pushl $test
             call printf
             addl $8, %esp
             movl size, %eax
-
-            xorl %edx, %edx
-            movl $8, %ecx
-            mull %ecx
-            xorl %edx, %edx
-            movl %eax, size
 
 
             pushl size
