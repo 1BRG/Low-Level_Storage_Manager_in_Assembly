@@ -345,9 +345,6 @@ main:
             call printf
             addl $16, %esp
 
-            pushl $0
-            call fflush
-            popl %ebx
 
             movl auxi, %edx
             inc %edx
@@ -373,9 +370,7 @@ main:
         call printf
         addl $12, %esp
 
-        pushl $0
-        call fflush
-        popl %ebx
+   
 
     p2:
         cmpl $3, op
