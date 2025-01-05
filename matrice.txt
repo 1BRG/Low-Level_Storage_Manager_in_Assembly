@@ -1,8 +1,10 @@
 .data
+stats: .space 4096
 total: .long 0
 numar: .byte 0
 urmatorul: .long 0
 date: .space 4096
+nume: .space 4096
 ind: .long 0
 aux3: .long 0
 aux2: .long 0
@@ -559,6 +561,167 @@ nume_fisier:
     final_nume:
     inc %eax
     ret
+concrete:
+    pushl %ebp
+    movl %esp, %ebp
+    pushl $0
+    pushl $0
+    # 8(%esp) -> fisier
+    # -4 desc folder
+    # -8 desc file
+    movl $5, %eax
+    movl 8(%ebp), %ebx
+    xorl %ecx, %ecx
+    int $0x80
+    
+    movl %eax, -4(%ebp)
+
+    movl %eax, %ebx
+    movl $141, %eax
+    movl $date, %ecx
+    movl $4096, %edx
+    int $0x80
+
+    cmpl $0, %eax
+        jle final_concrete
+    movl $date, %esi
+    movl $0, total
+        citire:
+            xorl %eax, %eax
+            movl $8, %ebx
+
+            movb (%esi, %ebx, 1), %al
+            inc %ebx
+            movb (%esi, %ebx, 1), %ah
+            inc %ebx
+            movl %eax, urmatorul
+
+            cmpb $46, (%esi, %ebx, 1)
+                je bb
+            xorl %edx, %edx
+            movl $nume, %edi
+            movl $0x00, (%edi, %edx, 1)
+
+            pushl $fisier
+            pushl $nume
+            call strcat
+            addl $8, %esp
+            
+            pushl $nume
+            pushl $test1
+            call printf
+            addl $8, %esp
+
+            movl %esi, %eax
+            addl urmatorul, %eax
+
+            pushl %eax
+            pushl $nume
+            call strcat
+            addl $8, %esp
+
+            pushl $nume
+            pushl $test1
+            call printf
+            addl $8, %esp
+
+            movl $5, %eax
+            movl $nume, %ebx
+            xorl %ecx, %ecx
+            int $0x80
+
+            pushl $nume
+            pushl $test1
+            call printf
+            addl $8, %esp
+
+            movl %eax, -8(%ebp)
+
+
+
+            movl %eax, %ebx
+            movl $108, %eax
+            movl $stats, %ecx
+            int $0x80
+
+            xorl %eax, %eax
+            movl $23, %ecx
+            movl $stats, %edi
+            movb (%edi, %ecx, 1), %ah
+            decl %ecx
+            movb (%edi, %ecx, 1), %al
+            shl $16, %eax
+            decl %ecx
+            movb (%edi, %ecx, 1), %ah 
+            decl %ecx
+            movb (%edi, %ecx, 1), %al
+            movl %eax, size
+            
+
+            movl -8(%ebp), %eax
+            movl $255, %ebx
+            xorl %edx, %edx
+            divl %ebx
+            addl $1, %edx
+            movl %edx, id
+            xorl %edx, %edx
+            xorl %ebx, %ebx
+            xorl %eax, %eax
+            xorl %ecx, %ecx
+
+            # get
+            pushl id
+            call get
+            popl %edx
+
+            cmp $0, %ebx
+                jne  bb
+            # add copy paste
+            # CA COncrete e mai smeker si nu face ceil
+            movl size, %eax
+            xorl %edx, %edx
+            divl omie
+            xorl %edx, %edx
+            mull omie
+            movl %eax, size
+
+
+            pushl size
+            pushl id
+            call add
+            addl $8, %esp
+            movl %eax, %ecx
+            xorl %edx, %edx
+            movl %ebx, %eax
+            divl omie
+            pushl %edx
+            pushl %eax
+            movl %ecx, %eax
+            xorl %edx, %edx
+            divl omie
+            pushl %edx
+            pushl %eax
+            pushl id
+            pushl $afis_add
+            call printf
+            addl $24, %esp
+
+            bb:
+            addl urmatorul, %esi
+            movl urmatorul, %eax
+            addl %eax, total
+            cmp $0, %eax
+            jne citire
+
+    final_concrete:
+    movl $6, %eax 
+    movl -4(%ebp), %ebx
+    int $0x80
+    popl %edx
+    popl %edx
+    popl %ebp
+    ret
+
 
 .global main
 
@@ -686,36 +849,47 @@ main:
         pushl $format_concrete
         call scanf
         addl $8, %esp
-        movl $5, %eax
-        movl $fisier, %ebx
-        xorl %ecx, %ecx
-        int $0x80
 
-        movl %eax, %ebx
-        movl $141, %eax
-        movl $date, %ecx
-        movl $4096, %edx
-        int $0x80
+         pushl $fisier
 
-        movl $date, %esi
-        movl $0, total
-        citire:
-            xorl %eax, %eax
-            movl $8, %ebx
-           # addl total, %ebx
-            movb (%esi, %ebx, 1), %al
-            movl %eax, urmatorul
-            call nume_fisier
-            # pushl %eax
-            # pushl $test
-            # call printf
-            # addl $8, %esp
-            bb:
-            addl urmatorul, %esi
-            movl urmatorul, %eax
-            addl %eax, total
-            cmp $0, %eax
-            jne citire
+         call concrete 
+         addl $4, %esp
+
+
+       # movl $5, %eax
+       # movl $fisier, %ebx
+       # xorl %ecx, %ecx
+       # int $0x80
+
+       # movl %eax, %ebx
+       # movl $141, %eax
+       # movl $date, %ecx
+       # movl $4096, %edx
+       # int $0x80
+
+       # movl $date, %esi
+       # movl $0, total
+       # citire:
+       #     xorl %eax, %eax
+       #     movl $8, %ebx
+       #    # addl total, %ebx
+       #     movb (%esi, %ebx, 1), %al
+       #     movl %eax, urmatorul
+       #     call nume_fisier
+       #     # pushl %eax
+       #     # pushl $test
+       #    # call printf
+       #     # addl $8, %esp
+       #     bb:
+       #     addl urmatorul, %esi
+       #     movl urmatorul, %eax
+       #     addl %eax, total
+       #     cmp $0, %eax
+       #     jne citire
+       # finalp4:
+       # movl $6, %eax 
+       # movl -4(%ebp), %ebx
+       # int $0x80
 
         
 
