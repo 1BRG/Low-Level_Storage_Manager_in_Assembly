@@ -1,146 +1,166 @@
-# Tema: Gestioneare simplificată a dispozitivului de stocare (Assembly)
+# Storage Device Management (Assembly) — README
 
-## Descriere scurtă
+## Short description
 
-Acest proiect implementează o componentă simplificată de management al dispozitivului de stocare (hard-disk/SSD) — parte dintr-un sistem de operare minimalist. Scopul este simularea operațiilor de **ADD**, **GET**, **DELETE** și **DEFRAGMENTATION** pentru două modele de memorie:
+This project implements a simplified storage device management module (hard disk / SSD) intended as part of a minimal operating system. It simulates allocation and management of files on a storage device using two memory models:
 
-* **Unidimensional (linie)** — memorie reprezentată ca un vector de blocuri.
-* **Bidimensional (matrice)** — memorie reprezentată ca o matrice de blocuri (stocare pe linii).
+* **One-dimensional (1D)** — memory modeled as a single vector (array) of blocks.
+* **Two-dimensional (2D)** — memory modeled as a matrix of blocks; contiguous sections are considered along rows.
 
-Proiectul respectă constrângerile din cerință: capacitate, dimensiuni blocuri, identificatori unici (descriptor între 1 și 255) și reguli de alocare contiguă.
-
----
-
-## Puncte cheie și convenții
-
-* **Capacitate totală (teoretică):** 8 MB (în cerință). Pentru demonstrații și teste se folosește o versiune redusă (ex.: 8kB → 8B / bloc) — implementarea folosește conversiile indicate în enunț.
-* **Dimensiune bloc:** 8 kB (în cerință). Pentru reprezentare demonstrativă se folosește 8 B.
-* **Descriptor fișier:** număr natural între `1` și `255`. Valoarea `0` în bloc înseamnă bloc liber.
-* **Reguli esențiale:** fișierul trebuie stocat **contigu** (pe un interval de blocuri). Un fișier are nevoie de cel puțin două blocuri.
-* **Unități:** 1 MB = 1024 kB, 1 kB = 1024 B.
+The module supports the basic operations: **ADD**, **GET**, **DELETE**, and **DEFRAGMENTATION**, following the constraints and conventions described in the assignment.
 
 ---
 
-## Funcționalități implementate
+## Key constraints and conventions
 
-Pentru ambele moduri (1D și 2D) programul suportă următoarele operații:
-
-* `ADD` — alocă primul interval liber (parcurgere stânga → dreapta) pentru fișierele cerute; afișează intervalul alocat sau `fd: ((0, 0), (0, 0))` / `fd: (0, 0)` dacă nu se poate aloca.
-* `GET` — returnează intervalul în care este stocat descriptorul dat (sau `(0,0)`/`((0,0),(0,0))` dacă nu există).
-* `DELETE` — eliberează blocurile ocupate de descriptor (setează blocurile la `0`) și afișează memoria curentă.
-* `DEFRAGMENTATION` — rearanjează blocurile astfel încât fișierele să fie stocate compact păstrând ordinea (1D: compactare spre stânga; 2D: compactare liniară pe linii, goluri mutate spre dreapta-jos).
-
-În plus, pentru modul bidimensional:
-
-* `CONCRETE (cod 5)` — parcurge un director specificat, obține fișierele din director, calculează un descriptor (fd real modulo 255 + 1) și dimensiunea în kB și tratează fiecare fișier ca un `ADD`. Dacă descriptorul calculat este duplicat, afișează `fd: ((0, 0), (0, 0))` și nu îl adaugă.
+* **Total capacity (theoretical):** 8 MB (as specified in the assignment). For demonstration and testing the implementation uses reduced sizes (example: representing an 8KB block as 8 bytes) — follow the conversion rules from the assignment.
+* **Block size:** 8 kB (assignment). For simplified testing the example representation uses 8 B per block.
+* **File descriptor:** integer in range `1..255`. The value `0` in a block denotes a free block.
+* **Allocation rules:** a file must be stored **contiguously** and needs at least **2 blocks**.
+* **Units:** 1 MB = 1024 kB; 1 kB = 1024 B.
 
 ---
 
-## Formatul inputului
+## Supported operations (both 1D and 2D)
 
-Programul citește de la `stdin`. Prima linie: numărul de operații `O`. Pentru fiecare operație, o linie cu codul operației:
+* **ADD** — allocate the first free contiguous interval (scan left-to-right, line-by-line for 2D). If allocation succeeds print the allocated interval; otherwise print the failure interval (all zeros) in the required format.
+* **GET** — return the interval where a given descriptor is stored, or an all-zero interval if the file is not present.
+* **DELETE** — free all blocks belonging to a descriptor (set their values to `0`) and print the updated memory when required by the assignment.
+* **DEFRAGMENTATION** — rearrange allocated blocks to make storage compact while preserving file order: in 1D move data left; in 2D compact by rows so free blocks (zeros) end up at bottom-right.
 
-* `1` — ADD
-* `2` — GET
-* `3` — DELETE
-* `4` — DEFRAGMENTATION
-* `5` — CONCRETE (doar în 2D)
+Additional operation in 2D:
 
-**ADD:** după codul `1` urmează o linie cu `N` (numărul de fișiere), apoi `2*N` linii: pentru fiecare fișier, pe rând, `descriptor` și `dimensiuneîn_kB`.
-
-**GET / DELETE:** după codul operației urmează o linie cu `descriptor`.
-
-**CONCRETE:** după codul `5` urmează o linie cu *path* absolut către folder.
+* **CONCRETE (code 5)** — scan a given folder, for each file compute a descriptor `(fd_real % 255) + 1`, compute file size in kB, and treat the pair as an ADD input. If the computed descriptor collides with an already-used descriptor, print the failure interval but do not add the file.
 
 ---
 
-## Exemplu de rulare (testare locală)
+## Input format
 
-Creați un fișier `input.txt` cu input-ul dorit, apoi rulați executabilul corespunzător redirecționând `stdin`:
+The program reads from `stdin`.
+
+1. First line: number of operations `O`.
+2. For each operation, read a line with its **operation code**:
+
+   * `1` — ADD
+   * `2` — GET
+   * `3` — DELETE
+   * `4` — DEFRAGMENTATION
+   * `5` — CONCRETE (2D only)
+
+### If operation is `ADD`:
+
+* Next line: integer `N` — number of files to add.
+* Next `2*N` lines: for each file two lines: `descriptor` and `size_in_kB`.
+
+### If operation is `GET` or `DELETE`:
+
+* Next line: `descriptor`.
+
+### If operation is `CONCRETE` (2D only):
+
+* Next line: absolute path to a folder containing files to be processed.
+
+---
+
+## Output format (exact strings expected)
+
+Follow the assignment format precisely when printing results.
+
+### 1D formats
+
+* **ADD success:** `%d: (%d, %d)
+  `  — `descriptor: (start_block, end_block)` (closed interval)
+* **ADD failure:** `fd: (0, 0)
+  `  — where `fd` is the descriptor that failed to insert
+* **GET:** `(%d, %d)
+  ` — start and end or `(0, 0)` if not present
+* **DELETE / DEFRAGMENTATION:** print the memory vector state if the assignment requires it (see spec examples)
+
+### 2D formats
+
+* **ADD success:** `%d: ((%d, %d), (%d, %d))
+  ` — `descriptor: ((startRow, startCol), (endRow, endCol))`
+* **ADD failure:** `fd: ((0, 0), (0, 0))
+  `
+* **GET:** `((%d, %d), (%d, %d))
+  `
+* **DELETE / DEFRAGMENTATION:** print the matrix state as described in the assignment examples
+
+---
+
+## Behavior examples (high-level)
+
+* When adding multiple files in one ADD operation, print the allocation result for each file in the order they were given.
+* For GET, if the descriptor does not exist return the all-zero interval.
+* For DELETE, if the descriptor does not exist, the memory remains unchanged.
+* DEFRAGMENTATION must preserve the relative order of files and produce a compact layout.
+
+---
+
+## Running / Testing locally
+
+To avoid typing long inputs interactively create test files and redirect them to `stdin`.
 
 ```bash
-# Exemplu unidimensional (task00)
-./task00 < input.txt
+# Example: run the 1D task executable
+./task00 < input1.txt
 
-# Exemplu bidimensional (task01)
-./task01 < input.txt
+# Example: run the 2D task executable
+./task01 < input2.txt
 ```
 
-**NOTĂ:** nu introduceți manual input la fiecare test — folosiți fișiere `input0.txt`, `input1.txt` etc. pentru a automatiza retestarea.
+Create multiple input files (e.g. `input0.txt`, `input1.txt`) to exercise different scenarios.
 
 ---
 
-## Structură recomandată proiect
-
-(sugestiv — adaptați după cum este structurat codul în repo)
+## Recommended project layout
 
 ```
 / (root)
-├─ src/                # surse (assembly / C helper / scripturi)
-├─ build/              # fișiere compilate / executabile
-├─ tests/              # fișiere input de test și output așteptat
+├─ src/                # assembly or C helper sources
+├─ build/              # compiled binaries
+├─ tests/              # test input files and expected outputs
 ├─ README.md
-└─ Makefile / build.sh  # scripturi de compilare / rulare
+└─ Makefile / build.sh  # optional build scripts
 ```
 
 ---
 
-## Note de implementare și optimizări (sugestii)
+## Implementation notes & suggestions
 
-* **ADD 1D:** parcurgere liniară a vectorului, căutare primul interval de blocuri libere de lungime suficientă.
+* For **ADD (1D)**: implement a linear scan for the first contiguous free interval of the required length.
 
-* **GET 1D:** căutare rapidă a primului bloc cu descriptorul dat sau păstrarea unei tabele (map) descriptor → interval (dacă memorie). Păstrați consistența după DELETE și DEFRAGMENTATION.
+* For **GET (1D)**: either scan for the descriptor or maintain a descriptor → interval map (but remember to keep it consistent on DELETE and DEFRAGMENTATION).
 
-* **DELETE 1D:** setare blocuri la `0` pentru descriptorul dat; actualizați structurile auxiliare.
+* For **DELETE (1D)**: set matching blocks to `0` and update any auxiliary structures.
 
-* **DEFRAGMENTATION 1D:** copiați fișierele non-zero în stânga, păstrând ordinea apariției; actualizați intervalele retur.
+* For **DEFRAGMENTATION (1D)**: compact non-zero blocks to the left, updating intervals reported by GET/ADD.
 
-* **ADD 2D:** pentru fiecare linie încercați să găsiți un interval contigu pe aceeași linie; dacă nu există, treceți la următoarea linie. Returnați coordonatele de start și end `((x1,y1),(x2,y2))`.
+* For **ADD (2D)**: search each row for a contiguous sequence of free blocks long enough for the file; return the first suitable interval.
 
-* **DEFRAGMENTATION 2D:** „flatten” pe linii (linie-major), mutați blocurile ocupate cât mai mult în sus-stânga, păstrând ordinea de apariție; golurile se vor acumula în dreapta-jos.
-
----
-
-## Exemple de output (format)
-
-* **ADD 1D:** `%d: (%d, %d)\n` (descriptor, start, end) sau `fd: (0, 0)` dacă nu încape.
-
-* **GET 1D:** `(%d, %d)\n`.
-
-* **DELETE / DEFRAGMENTATION 1D:** afișare memorie (vector) după operație.
-
-* **ADD 2D:** `%d: ((%d, %d), (%%d, %d))\n` (descriptor, (startX,startY), (endX,endY)) sau `fd: ((0,0),(0,0))` dacă nu se poate.
-
-* **GET 2D:** `((%d, %d), (%d, %d))\n`.
+* For **DEFRAGMENTATION (2D)**: flatten row-major, move used blocks up-left preserving order, leaving zeros at bottom-right.
 
 ---
 
-## Testare și validare
 
-* Pregătiți seturi de fișiere `inputX.txt` care acoperă cazuri: alipire fără spațiu, spații sparte (gap-uri), DELETE la descriptor inexistent, DEFRAGMENTATION după mai multe operații, CONCRETE (folder cu fișiere) etc.
-* Verificați corectitudinea intervalelor și consistența memoriei după fiecare operație.
+## Limitations
 
----
-
-## Limitări cunoscute
-
-* Alocarea este *fără* compactare automată — dacă nu există un interval contiguu suficient, `ADD` va eșua; scopul este să evidențieze comportamentul real al unor scheme simple de alocare.
-* Implementarea CONCRETE depinde de comportamentul sistemului de fișiere (special pentru calculul descriptorului modul 255 + 1).
+* Storage allocation requires contiguous space; the implementation does not support non-contiguous (chained) storage.
+* The CONCRETE operation depends on the host filesystem APIs for file size and descriptor (open). Behaviour may differ across platforms.
 
 ---
 
-## Contribuții / Extinderi posibile
+## Possible extensions
 
-* Implementarea unui index (tabel) descriptor → interval pentru operații `GET` rapide.
-* Algoritmi de alocare alternativi: `best-fit`, `first-fit` (deja folosit), `worst-fit`.
-* Suport pentru fișiere non-contigue (cataring) și o structură de fișiere cu metadate reale.
-
----
-
-## Autor 
-
-Balaceanu Rafael Gabriel 
+* Maintain an index (map) for descriptor → interval to accelerate GET.
+* Implement alternative allocation strategies: `best-fit`, `worst-fit`.
+* Support non-contiguous file storage and metadata structures (file table, directory simulation).
 
 ---
 
-Doriți să ajustez README (mai multă documentație tehnică, exemple de input/output compacte, sau un model `Makefile` + instrucțiuni de compilare)?
+## Author
+
+Balaceanu Rafael Gabriel
+
+---
+
