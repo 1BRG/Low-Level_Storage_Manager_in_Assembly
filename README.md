@@ -1,4 +1,4 @@
-# Storage Device Management (Assembly) — README
+# Storage Device Management (Assembly) 
 
 ## Short description
 
