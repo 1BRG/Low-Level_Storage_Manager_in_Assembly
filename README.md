@@ -16,7 +16,7 @@ The module supports the basic operations: **ADD**, **GET**, **DELETE**, and **DE
 * **Total capacity (theoretical):** 8 MB (as specified in the assignment). For demonstration and testing the implementation uses reduced sizes (example: representing an 8KB block as 8 bytes) — follow the conversion rules from the assignment.
 * **Block size:** 8 kB (assignment). For simplified testing the example representation uses 8 B per block.
 * **File descriptor:** integer in range `1..255`. The value `0` in a block denotes a free block.
-* **Allocation rules:** a file must be stored **contiguously** and needs at least **2 blocks**.
+* **Allocation rules:** a file must be stored **contiguously** based on the block ceiling division of its size.
 * **Units:** 1 MB = 1024 kB; 1 kB = 1024 B.
 
 ---
@@ -68,32 +68,17 @@ Follow the assignment format precisely when printing results.
 
 ### 1D formats
 
-* **ADD success:** `%d: (%d, %d)
-  `  — `descriptor: (start_block, end_block)` (closed interval)
-* **ADD failure:** `fd: (0, 0)
-  `  — where `fd` is the descriptor that failed to insert
-* **GET:** `(%d, %d)
-  ` — start and end or `(0, 0)` if not present
+* **ADD success:** `%d: (%d, %d)`  — `descriptor: (start_block, end_block)` (closed interval)
+* **ADD failure:** `fd: (0, 0)`  — where `fd` is the descriptor that failed to insert
+* **GET:** `(%d, %d)` — start and end or `(0, 0)` if not present
 * **DELETE / DEFRAGMENTATION:** print the memory vector state if the assignment requires it (see spec examples)
 
 ### 2D formats
 
-* **ADD success:** `%d: ((%d, %d), (%d, %d))
-  ` — `descriptor: ((startRow, startCol), (endRow, endCol))`
-* **ADD failure:** `fd: ((0, 0), (0, 0))
-  `
-* **GET:** `((%d, %d), (%d, %d))
-  `
+* **ADD success:** `%d: ((%d, %d), (%d, %d))` — `descriptor: ((startRow, startCol), (endRow, endCol))`
+* **ADD failure:** `fd: ((0, 0), (0, 0))`
+* **GET:** `((%d, %d), (%d, %d))`
 * **DELETE / DEFRAGMENTATION:** print the matrix state as described in the assignment examples
-
----
-
-## Behavior examples (high-level)
-
-* When adding multiple files in one ADD operation, print the allocation result for each file in the order they were given.
-* For GET, if the descriptor does not exist return the all-zero interval.
-* For DELETE, if the descriptor does not exist, the memory remains unchanged.
-* DEFRAGMENTATION must preserve the relative order of files and produce a compact layout.
 
 ---
 
@@ -103,25 +88,53 @@ To avoid typing long inputs interactively create test files and redirect them to
 
 ```bash
 # Example: run the 1D task executable
-./task00 < input1.txt
+./task1 < input1.txt
 
 # Example: run the 2D task executable
-./task01 < input2.txt
+./task2 < input2.txt
 ```
 
 Create multiple input files (e.g. `input0.txt`, `input1.txt`) to exercise different scenarios.
 
 ---
 
+## Automated Testing (Checker)
+
+This project includes a Python-based automated testing script (`checker.py`). The script feeds the input files located in the `tests/` directory to your compiled executables (`task1` and `task2`), captures the output, and compares it against expected outputs. 
+
+It handles execution timeouts and will properly capture runtime errors such as Segmentation Faults.
+
+**To test all exercises:**
+```bash
+python3 checker.py
+```
+
+**To test a specific exercise (e.g., just the 1D case):**
+```bash
+python3 checker.py task1
+```
+
+**To view exercise descriptions and max scores:**
+```bash
+python3 checker.py -s
+```
+
+*Note: Ensure you have compiled your binaries as `task1` and `task2` in the root directory before running the checker.*
+
+---
+
 ## Recommended project layout
 
-```
+```text
 / (root)
-├─ src/                # assembly or C helper sources
-├─ build/              # compiled binaries
-├─ tests/              # test input files and expected outputs
+├─ vector.s / src/     # Assembly source code for 1D
+├─ matrice.s / src/    # Assembly source code for 2D
+├─ task1               # Compiled binary for 1D
+├─ task2               # Compiled binary for 2D
+├─ checker.py          # Python testing script
+├─ tests/              # Test input files and expected outputs (.in / .out)
 ├─ README.md
-└─ Makefile / build.sh  # optional build scripts
+└─ Makefile            # Build script to compile task1 and task2
 ```
 
 ---
@@ -129,19 +142,13 @@ Create multiple input files (e.g. `input0.txt`, `input1.txt`) to exercise differ
 ## Implementation notes & suggestions
 
 * For **ADD (1D)**: implement a linear scan for the first contiguous free interval of the required length.
-
 * For **GET (1D)**: either scan for the descriptor or maintain a descriptor → interval map (but remember to keep it consistent on DELETE and DEFRAGMENTATION).
-
 * For **DELETE (1D)**: set matching blocks to `0` and update any auxiliary structures.
-
 * For **DEFRAGMENTATION (1D)**: compact non-zero blocks to the left, updating intervals reported by GET/ADD.
-
 * For **ADD (2D)**: search each row for a contiguous sequence of free blocks long enough for the file; return the first suitable interval.
-
 * For **DEFRAGMENTATION (2D)**: flatten row-major, move used blocks up-left preserving order, leaving zeros at bottom-right.
 
 ---
-
 
 ## Limitations
 
@@ -161,6 +168,3 @@ Create multiple input files (e.g. `input0.txt`, `input1.txt`) to exercise differ
 ## Author
 
 Balaceanu Rafael Gabriel
-
----
-
